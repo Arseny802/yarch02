@@ -1,6 +1,13 @@
 version: '3.8'
 
 services:
+  # CPP Builder for other services
+  cpp_builder:
+    build:
+      context: ./build_docker/cpp_builder
+      dockerfile: Dockerfile
+    container_name: builder_cpp_gcc
+
   # PostgreSQL Database
   postgres:
     image: postgres:14
@@ -89,6 +96,7 @@ services:
       dockerfile: Dockerfile
     container_name: cinemaabyss-events-service
     depends_on:
+      - cpp_builder
       - postgres
       - kafka
     ports:
@@ -106,6 +114,7 @@ services:
       dockerfile: Dockerfile
     container_name: cinemaabyss-proxy-service
     depends_on:
+      - cpp_builder
       - monolith
       - movies-service
       - events-service
@@ -117,7 +126,7 @@ services:
       MOVIES_SERVICE_URL: http://movies-service:8081
       EVENTS_SERVICE_URL: http://events-service:8082
       GRADUAL_MIGRATION: "true"
-      MOVIES_MIGRATION_PERCENT: "50"
+      MOVIES_MIGRATION_PERCENT: "75"
     networks:
       - cinemaabyss-network
 
