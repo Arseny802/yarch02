@@ -311,7 +311,7 @@ https://cinemaabyss.example.com/api/movies
 и приложите скриншот развертывания helm и вывода https://cinemaabyss.example.com/api/movies
 
 
-# Задание 5
+## Задание 5
 Компания планирует активно развиваться и для повышения надежности, безопасности, реализации сетевых паттернов типа Circuit Breaker и канареечного деплоя вам как архитектору необходимо развернуть istio и настроить circuit breaker для monolith и movies сервисов.
 
 ```bash
@@ -335,12 +335,12 @@ kubectl apply -f .\src\kubernetes\circuit-breaker-config.yaml -n cinemaabyss
 
 Тестирование
 
-# fortio
+### fortio
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/samples/httpbin/sample-client/fortio-deploy.yaml -n cinemaabyss
 ```
 
-# Get the fortio pod name
+### Get the fortio pod name
 ```bash
 FORTIO_POD=$(kubectl get pod -n cinemaabyss | grep fortio | awk '{print $1}')
 
