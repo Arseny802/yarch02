@@ -4,7 +4,7 @@ FROM cpp_builder:latest AS kb_proxy_dependecies
 ARG build_dir=/kb_proxy/build
 
 ADD ./conanfile.txt /kb_proxy/deps/conanfile.txt
-COPY --from=cpp_builder /deps/conanprofile.txt /kb_proxy/deps/conanprofile.txt
+COPY --from=cpp_builder:latest /deps/conanprofile.txt /kb_proxy/deps/conanprofile.txt
 
 RUN /root/.local/bin/conan install \
   /kb_proxy/deps/conanfile.txt \
