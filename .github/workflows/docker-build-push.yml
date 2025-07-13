@@ -47,9 +47,8 @@ jobs:
           name: cpp_builder
           path: /tmp/cpp_builder.tar
 
-  build-and-push:
+  build-and-push-go:
     runs-on: ubuntu-latest
-    needs: build-builders
     permissions:
       contents: read
       packages: write
@@ -67,17 +66,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cpp_builder
-          path: /tmp
-
-      - name: Load CPP Builder Docker image
-        run: |
-          docker load --input /tmp/cpp_builder.tar
-          docker image ls -a
 
       - name: Extract metadata (tags, labels) for Monolith
         id: meta-monolith
@@ -124,6 +112,38 @@ jobs:
           labels: ${{ steps.meta-movies.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  build-and-push-cpp:
+    runs-on: ubuntu-latest
+    needs: build-builders
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp_builder
+          path: /tmp
+
+      - name: Load CPP Builder Docker image
+        run: |
+          docker load --input /tmp/cpp_builder.tar
+          docker image ls -a
 
       - name: Extract metadata (tags, labels) for Proxy Service
         id: meta-proxy

@@ -1,5 +1,5 @@
 # Dependency time ---------------------------------------
-FROM cpp_builder AS kb_events_dependecies
+FROM cpp_builder:latest AS kb_events_dependecies
 
 ARG build_dir=/kb_events/build
 
