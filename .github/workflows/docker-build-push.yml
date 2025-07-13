@@ -84,6 +84,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push CPP Builder Service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./build_docker/cpp_builder
+          push: false
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Extract metadata (tags, labels) for Proxy Service
         id: meta-proxy
