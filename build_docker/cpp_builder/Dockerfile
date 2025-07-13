@@ -1,4 +1,4 @@
-FROM gcc:latest AS cpp_builder
+FROM gcc:14.1.0 AS cpp_builder
 
 ADD ./conanfile.txt /deps/conanfile.txt
 ADD ./conanprofile.txt /deps/conanprofile.txt
