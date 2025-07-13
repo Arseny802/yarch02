@@ -40,13 +40,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: cpp_builder:latest
-          outputs: type=docker,dest=/builder/cpp_builder.tar
+          outputs: type=docker,dest=/tmp/cpp_builder.tar
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: cpp_builder
-          path: /builder/cpp_builder.tar
+          path: /tmp/cpp_builder.tar
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -77,7 +77,7 @@ jobs:
 
       - name: Load CPP Builder Docker image
         run: |
-          docker load --input /builder/cpp_builder.tar
+          docker load --input /tmp/cpp_builder.tar
           docker image ls -a
 
       - name: Extract metadata (tags, labels) for Monolith
