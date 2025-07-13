@@ -27,11 +27,16 @@ RUN cmake .. --toolchain=$toolchaine \
 # Run time ---------------------------------------
 FROM debian:stable-slim
 
+ARG PORT=8082
+ARG KAFKA_BROKERS=kafka:9092
+ENV PORT=$PORT
+ENV KAFKA_BROKERS=$KAFKA_BROKERS
+
 RUN groupadd -r yarch02 && useradd -r -g yarch02 yarch02
 USER yarch02
 
 WORKDIR /kb_events
 COPY --from=build /kb_events/build/KbEvents .
 
-EXPOSE 8000
-ENTRYPOINT ["./KbEvents", "--port=8000"]
+EXPOSE $PORT
+ENTRYPOINT sh -c './KbEvents --port=$PORT --kafka-brokers="$KAFKA_BROKERS"'

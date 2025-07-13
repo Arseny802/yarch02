@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cpr/response.h>
 #include <cpr/session.h>
+#include <unordered_set>
 
 namespace kb::proxy {
 namespace {
@@ -37,14 +38,16 @@ crow::response Forwarder::forward(const crow::request &original_request,
                                   const std::string &url) {
   cpr::Session session;
   session.SetUrl(url);
-  session.SetBody(original_request.body);
+  session.SetBody(std::move(original_request.body));
 
   cpr::Header headers;
-  std::for_each(original_request.headers.begin(),
-                original_request.headers.end(), [&headers](auto &&pair) {
-                  headers.emplace(std::move(pair.first),
-                                  std::move(pair.second));
-                });
+  std::for_each(
+      original_request.headers.begin(), original_request.headers.end(),
+      [&headers](auto &&pair) {
+        CROW_LOG_DEBUG << ">> Header '" << pair.first << "' with value '"
+                       << pair.second << "' added.";
+        headers.emplace(std::move(pair.first), std::move(pair.second));
+      });
   session.SetHeader(std::move(headers));
 
   cpr::Response original_response =
@@ -53,15 +56,27 @@ crow::response Forwarder::forward(const crow::request &original_request,
     return crow::response(501);
   }
 
-  crow::response redirected_response;
-  redirected_response.code = original_response.status_code;
-  redirected_response.body = std::move(original_response.text);
-  CROW_LOG_DEBUG << "Response body: " << redirected_response.body;
+  crow::response redirected_response(original_response.status_code,
+                                     std::move(original_response.text));
 
-  for (auto &&[a, b] : original_response.header) {
-    CROW_LOG_DEBUG << "Header '" << a << "' with value '" << b << "' added.";
-    redirected_response.headers.emplace(std::move(a), std::move(b));
-  }
+  std::for_each(
+      original_response.header.begin(), original_response.header.end(),
+      [&redirected_response](auto &&pair) {
+        static const std::unordered_set<std::string> excluded_headers = {
+            "Content-Encoding", "Content-Length", "Transfer-Encoding",
+            "Connection"};
+
+        if (excluded_headers.find(pair.first) != excluded_headers.end()) {
+          CROW_LOG_DEBUG << "<< Header '" << pair.first << "' with value '"
+                         << pair.second << "' EXCLUDED.";
+          return;
+        }
+
+        CROW_LOG_DEBUG << "<< Header '" << pair.first << "' with value '"
+                       << pair.second << "' added.";
+        redirected_response.headers.emplace(std::move(pair.first),
+                                            std::move(pair.second));
+      });
 
   return redirected_response;
 }

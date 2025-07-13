@@ -6,6 +6,7 @@
 #include <cpr/session.h>
 #include <crow.h>
 
+#include <crow/common.h>
 #include <crow/logging.h>
 #include <memory>
 #include <utility>
@@ -30,23 +31,27 @@ void Router::start() {
   CROW_LOG_INFO << "Migratio gradual: " << setup_.migration_gradual
                 << "; percent = " << setup_.migration_percent;
 
-  CROW_ROUTE(app, "/health")([]() {
+  CROW_ROUTE(app, "/health").methods(crow::HTTPMethod::Get)([]() {
     return crow::response(200,
                           "{\"status\": \"ok\", \"service\": \"kb_proxy\"}");
   });
 
-  CROW_ROUTE(app, "/<path>")(
-      [this](const crow::request &original_request, const std::string &path) {
-        const std::string url = route(path) + "/" + path;
-        CROW_LOG_INFO << "Routing request with path '/" << path << "' to URL '"
-                      << url << "'.";
+  CROW_ROUTE(app, "/<path>")
+      .methods(crow::HTTPMethod::Get, crow::HTTPMethod::Post,
+               crow::HTTPMethod::Put, crow::HTTPMethod::Patch,
+               crow::HTTPMethod::Delete, crow::HTTPMethod::Head,
+               crow::HTTPMethod::Options)(
+          [this](const crow::request &request, const std::string &path) {
+            const std::string url = route(path) + "/" + path;
+            CROW_LOG_INFO << "Routing request with path '/" << path
+                          << "' to URL '" << url << "'.";
 
-        crow::response response = proxy_->forward(original_request, url);
-        CROW_LOG_INFO << "Response status code " << response.code
-                      << ", body size " << response.body.size()
-                      << ", headers count " << response.headers.size();
-        return response;
-      });
+            crow::response response = proxy_->forward(request, url);
+            CROW_LOG_INFO << "Response status code " << response.code
+                          << ", body size " << response.body.size()
+                          << ", headers count " << response.headers.size();
+            return response;
+          });
 
   app.port(port_).multithreaded().run();
 }

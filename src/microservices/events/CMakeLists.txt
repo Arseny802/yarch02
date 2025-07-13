@@ -5,13 +5,17 @@ set(VENDOR "Arseny802")
 option(BUILD_TESTS "Build test programs" ON)
 
 find_package(argparse CONFIG REQUIRED)
-find_package(RdKafka  REQUIRED)
+find_package(Crow REQUIRED)
+find_package(RdKafka REQUIRED)
+find_package(modern-cpp-kafka REQUIRED)
 
 add_library(${PROJECT_NAME}_OBJ OBJECT
-  src/producer.cc
   src/consumer.cc
+  src/producer.cc
+  src/service.cc
 )
 target_link_libraries(${PROJECT_NAME}_OBJ PUBLIC
+  Crow::Crow
   RdKafka::rdkafka++
 )
 set_target_properties(${PROJECT_NAME}_OBJ PROPERTIES
@@ -25,6 +29,7 @@ target_include_directories(${PROJECT_NAME}_OBJ
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
   PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${modern-cpp-kafka_INCLUDE_DIRS}"
 )
 
 add_executable(${PROJECT_NAME} src/main.cc)

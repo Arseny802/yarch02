@@ -1,5 +1,6 @@
 #pragma once
-#include <crow.h>
+#include <crow/http_request.h>
+#include <crow/http_response.h>
 #include <string>
 
 namespace kb::proxy {
