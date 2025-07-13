@@ -18,8 +18,33 @@ env:
   PROXY_SERVICE_IMAGE_NAME: ${{ github.repository }}/proxy-service
 
 jobs:
+  build-builders:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push CPP Builder Service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./build_docker/cpp_builder
+          push: false
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: cpp_builder:latest
+          outputs: type=docker,dest=/builder/cpp_builder.tar
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: build-builders
     permissions:
       contents: read
       packages: write
@@ -37,6 +62,17 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: cpp_builder
+          path: /tmp
+
+      - name: Load CPP Builder Docker image
+        run: |
+          docker load --input /builder/cpp_builder.tar
+          docker image ls -a
 
       - name: Extract metadata (tags, labels) for Monolith
         id: meta-monolith
@@ -81,15 +117,6 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta-movies.outputs.tags }}
           labels: ${{ steps.meta-movies.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push CPP Builder Service Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./build_docker/cpp_builder
-          push: false
-          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
