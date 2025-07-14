@@ -116,6 +116,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./build_docker/cpp_builder
+          push: true
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
