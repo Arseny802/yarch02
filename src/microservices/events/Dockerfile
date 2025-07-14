@@ -1,11 +1,12 @@
 # Dependency time ---------------------------------------
 ARG BASE_DEPENDENCY_IMAGE=cpp_builder
-FROM ${BASE_DEPENDENCY_IMAGE} AS kb_events_dependecies
+FROM ${BASE_DEPENDENCY_IMAGE}:latest AS kb_cpp_builder
+FROM kb_cpp_builder AS kb_events_dependecies
 
 ARG build_dir=/kb_events/build
 
 ADD ./conanfile.txt /kb_events/deps/conanfile.txt
-COPY --from=cpp_builder /deps/conanprofile.txt /kb_events/deps/conanprofile.txt
+COPY --from=kb_cpp_builder /deps/conanprofile.txt /kb_events/deps/conanprofile.txt
 
 RUN /root/.local/bin/conan install \
   /kb_events/deps/conanfile.txt \

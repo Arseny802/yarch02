@@ -1,11 +1,12 @@
 # Dependency time ---------------------------------------
 ARG BASE_DEPENDENCY_IMAGE=cpp_builder
-FROM ${BASE_DEPENDENCY_IMAGE} AS kb_proxy_dependecies
+FROM ${BASE_DEPENDENCY_IMAGE}:latest AS kb_cpp_builder
+FROM kb_cpp_builder AS kb_proxy_dependecies
 
 ARG build_dir=/kb_proxy/build
 
 ADD ./conanfile.txt /kb_proxy/deps/conanfile.txt
-COPY --from=cpp_builder /deps/conanprofile.txt /kb_proxy/deps/conanprofile.txt
+COPY --from=kb_cpp_builder /deps/conanprofile.txt /kb_proxy/deps/conanprofile.txt
 
 RUN /root/.local/bin/conan install \
   /kb_proxy/deps/conanfile.txt \
