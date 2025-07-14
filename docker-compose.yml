@@ -2,11 +2,12 @@ version: '3.8'
 
 services:
   # CPP Builder for other services
-  cpp_builder:
+  cpp-builder:
     build:
       context: ./build_docker/cpp_builder
       dockerfile: Dockerfile
-    container_name: builder_cpp_gcc
+    image: cpp_builder
+    container_name: cpp_builder
 
   # PostgreSQL Database
   postgres:
@@ -96,7 +97,7 @@ services:
       dockerfile: Dockerfile
     container_name: cinemaabyss-events-service
     depends_on:
-      - cpp_builder
+      - cpp-builder
       - postgres
       - kafka
     ports:
@@ -114,7 +115,7 @@ services:
       dockerfile: Dockerfile
     container_name: cinemaabyss-proxy-service
     depends_on:
-      - cpp_builder
+      - cpp-builder
       - monolith
       - movies-service
       - events-service
