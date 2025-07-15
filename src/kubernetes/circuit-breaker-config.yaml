@@ -2,6 +2,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: monolith-circuit-breaker
+  namespace: cinemaabyss
 spec:
   host: monolith
   trafficPolicy:
@@ -25,6 +26,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: movies-service-circuit-breaker
+  namespace: cinemaabyss
 spec:
   host: movies-service
   trafficPolicy:
@@ -49,6 +51,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: monolith-vs
+  namespace: cinemaabyss
 spec:
   hosts:
     - monolith
@@ -66,6 +69,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: movies-service-vs
+  namespace: cinemaabyss
 spec:
   hosts:
     - movies-service
