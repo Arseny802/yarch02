@@ -1,0 +1,101 @@
+@startuml "Кинобездна - To-Be архитектура (C4 контейнеры)"
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(Customer, "Customer", "End user of the platform.")
+
+System_Boundary(kino_boundary, "System Cinema Abyss") {
+
+  Person(Administrator, "Administrator", "System administrator.")
+
+  System_Boundary(FrontendLayer, "Frontend Layer") {
+    Container(WEB,        "WEB Application",    "React", "WEB Client")
+    Container(Mobile,     "Mobile Application", "React Native", "Mobile Client")
+    Container(TV,         "TV Application",     "React Native", "TV Client")
+    Container(WebBff,     "WEB BFF",            "Go, REST", "WEB clients backend-for-frontend")
+    Container(MobileBff,  "Mobile BFF",         "Go, REST", "mobile clients backend-for-frontend")
+    Container(TvBff,      "TV BFF",             "Go, REST", "TV clients backend-for-frontend")
+  }
+
+  System_Boundary(BackendLayer, "Backend Layer") {
+    Container(ApiGateway,           "API Gateway",          "C++, REST", "Reverse proxy for microservices")
+
+    Container(ServiceUser,          "ServiceUser",          "Go, REST", "User registration and aithorization")
+    Container(ServiceMovie,         "ServiceMovie",         "Go, REST", "Movie metadata manager")
+    Container(ServicePayment,       "ServicePayment",       "Go, REST, MQTT", "Customer subscription management")
+    Container(ServicePreferencies,  "ServicePreferencies",  "Go, REST, MQTT", "Manages user ratings")
+
+    Container(ServiceEvents,        "ServiceEvents",        "C++, REST, MQTT", "Generates notifications")
+    Container(RecomendationSystemAdapter, "RecomendationSystemAdapter", "Go", "Adapter to external system")
+    
+    System_Boundary(EventBus, "Event Bus") {
+      Container(Kafka,      "Kafka")
+      Container(ZooKeeper,  "ZooKeeper")
+    }
+
+    ContainerDb(Database, "Postgres", "Relational DB", "Stores platform data")
+    
+    System_Boundary(Statistics, "Statistics") {
+      ContainerDb(Prometheus, "Prometheus", "Monitoring system", "Stores usage statistics")
+      Container(Graphana,     "Graphana",   "Visualization system", "Shows statistics")
+    }
+
+    System_Boundary(Streaming, "Streaming") {
+      Container(MovieDataManager, "MovieDataManager", "C++", "Streaming service")
+      ContainerDb(MovieStorage,   "Filesystem",       "RAID 3 FS", "Stores movies data")
+    }
+  }
+}
+
+Container_Ext(RecomendationSystem,  "Recomendation System", "REST")
+Container_Ext(PaymentSystem,        "Payment System", "REST")
+
+
+' Customer flows
+Rel(Customer,   WEB, "Using application")
+Rel(Customer,   Mobile, "Using application")
+Rel(Customer,   TV, "Using application")
+Rel(WEB,        WebBff, "Application-specific BFF")
+Rel(Mobile,     MobileBff, "Application-specific BFF")
+Rel(TV,         TvBff, "Application-specific BFF")
+Rel(WebBff,     ApiGateway, "Call to real backend system")
+Rel(MobileBff,  ApiGateway, "Call to real backend system")
+Rel(TvBff,      ApiGateway, "Call to real backend system")
+
+' Administrator flows
+Rel(Administrator, Graphana, "Get statistics")
+Rel(Administrator, ServiceMovie, "Add data")
+Rel(Administrator, MovieStorage, "Add data")
+Rel(Graphana, Prometheus, "Get data")
+
+' Internal flows
+Rel(ApiGateway, ServiceUser, "Authenticate user and manage info")
+Rel(ApiGateway, ServiceMovie, "Get common movie info ")
+Rel(ApiGateway, ServicePayment, "Manage user payment requests")
+Rel(ApiGateway, ServicePreferencies, "Manage user scpecified preferencies")
+Rel(ApiGateway, ServiceEvents, "Retrive events for customer")
+Rel(ApiGateway, MovieDataManager, "Stream movies")
+Rel(ApiGateway, Prometheus, "Send statistics")
+Rel(ServiceUser, Prometheus, "Send statistics")
+Rel(MovieDataManager, Prometheus, "Send statistics")
+
+Rel(ServicePayment, PaymentSystem, "Apply payment")
+
+' Event flows
+Rel(RecomendationSystem, RecomendationSystemAdapter, "External system call performer")
+Rel(RecomendationSystemAdapter, ServicePreferencies, "Get recomendations by preferencies")
+Rel(ServicePreferencies, ServiceMovie, "")
+Rel(ServicePreferencies, Kafka, "Personal recomendations")
+Rel(ServicePayment, Kafka, "Payment notifications")
+Rel(Kafka, ServiceEvents, "Format data from bus to user notifications")
+Rel(Kafka, Prometheus, "Send statistics")
+Rel(ZooKeeper, Kafka, "Manage cluster")
+
+' Persistence
+Rel(ServiceUser,          Database, "Reads/writes users")
+Rel(ServiceMovie,         Database, "Reads/writes movie metainfo")
+Rel(ServicePayment,       Database, "Reads/writes payment info")
+Rel(ServicePreferencies,  Database, "Reads/writes common & personal user preferencies")
+Rel(MovieDataManager,     MovieStorage, "Reads movies")
+
+@enduml
